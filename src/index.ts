@@ -1,4 +1,4 @@
-import { renderToMjml } from '@faire/mjml-react/utils/renderToMjml'
+import { renderToMjml } from '@faire/mjml-react/utils/renderToMjml.js'
 import type { Express } from 'express'
 import cloneDeep from 'lodash/cloneDeep.js'
 import mjml2html from 'mjml'
