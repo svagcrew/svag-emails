@@ -1,6 +1,6 @@
 {
   "name": "svag-emails",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "homepage": "https://github.com/svagcrew/svag-emails",
   "repository": {
     "type": "git",
@@ -23,15 +23,23 @@
     "./dist/**/*"
   ],
   "scripts": {
-    "prettify": "svag-prettier prettify",
-    "dev": "svag-ts dev",
-    "watch": "svag-ts watch",
-    "types": "svag-ts types",
     "build": "svag-ts build",
-    "start": "svag-ts start",
+    "dev": "svag-ts dev",
     "lint": "svag-lint lint",
+    "prepare": "husky",
+    "prettify": "svag-prettier prettify",
+    "start": "svag-ts start",
     "test": "svag-jest test",
-    "prepare": "husky"
+    "types": "svag-ts types",
+    "watch": "svag-ts watch"
+  },
+  "dependencies": {
+    "@faire/mjml-react": "^3.3.0",
+    "lodash": "^4.17.21",
+    "mjml": "^4.15.3",
+    "mjml-core": "^4.15.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
@@ -56,13 +64,5 @@
     "tsc-alias": "^1.8.10",
     "typescript": "^5.4.5"
   },
-  "type": "module",
-  "dependencies": {
-    "@faire/mjml-react": "^3.3.0",
-    "lodash": "^4.17.21",
-    "mjml": "^4.15.3",
-    "mjml-core": "^4.15.3",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  }
+  "type": "module"
 }
