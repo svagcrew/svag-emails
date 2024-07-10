@@ -11,41 +11,56 @@ export type SendEmailThroughProvider = (props: { to: string; subject: string; ht
   loggableResponse: { status: number; statusText: string; data: any }
 }>
 type Variables = Record<string, any>
-type ReactEmailTemplateGetter<TVariables extends Variables = Variables> = (props: TVariables) => React.ReactElement
-type HtmlEmailTemplateGetter<TVariables extends Variables = Variables> = (props: TVariables) => string
-type EmailTemplateGetter<TVariables extends Variables = Variables> =
-  | ReactEmailTemplateGetter<TVariables>
-  | HtmlEmailTemplateGetter<TVariables>
-type SendEmailProps<TVariables extends Variables = Variables> = {
+type ReactEmailTemplateGetter<
+  TVariables extends Variables = Variables,
+  TVariablesSensetive extends Variables = Variables,
+> = (props: TVariables & TVariablesSensetive) => React.ReactElement
+type HtmlEmailTemplateGetter<
+  TVariables extends Variables = Variables,
+  TVariablesSensetive extends Variables = Variables,
+> = (props: TVariables & TVariablesSensetive) => string
+type EmailTemplateGetter<TVariables extends Variables = Variables, TVariablesSensetive extends Variables = Variables> =
+  | ReactEmailTemplateGetter<TVariables, TVariablesSensetive>
+  | HtmlEmailTemplateGetter<TVariables, TVariablesSensetive>
+type SendEmailProps<TVariables extends Variables = Variables, TVariablesSensetive extends Variables = Variables> = {
   to: string | { email: string }
   subject?: string
-  variables: TVariables
+  variables?: TVariables
+  variablesSensetive?: TVariablesSensetive
 }
-type SentEmailLog<TVariables extends Variables = Variables> = SendEmailProps<TVariables> & {
+type SentEmailLog<
+  TVariables extends Variables = Variables,
+  TVariablesSensetive extends Variables = Variables,
+> = SendEmailProps<TVariables, TVariablesSensetive> & {
   to: string
   name: string
 }
-type SendEmail<TVariables extends Variables = Variables> = (
-  props: SendEmailProps<TVariables>
+type SendEmail<TVariables extends Variables = Variables, TVariablesSensetive extends Variables = Variables> = (
+  props: SendEmailProps<TVariables, TVariablesSensetive>
 ) => Promise<{ ok: boolean }>
-type GetHtml<TVariables extends Variables = Variables> = (props: { variables: TVariables }) => string
+type GetHtml<TVariables extends Variables = Variables, TVariablesSensetive extends Variables = Variables> = (props: {
+  variables: TVariables & TVariablesSensetive
+}) => string
 type GetPreviewHtml = () => string
-type EmailDefinition<TVariables extends Variables = Variables> = {
+type EmailDefinition<TVariables extends Variables = Variables, TVariablesSensetive extends Variables = Variables> = {
   name: string
-  subject: string | ((props: TVariables) => string)
-  template: EmailTemplateGetter<TVariables>
-  previewVariables: TVariables
-  send: SendEmail<TVariables>
+  subject: string | ((props: TVariables & TVariablesSensetive) => string)
+  template: EmailTemplateGetter<TVariables, TVariablesSensetive>
+  previewVariables: TVariables & TVariablesSensetive
+  send: SendEmail<TVariables, TVariablesSensetive>
   getPreviewHtml: GetPreviewHtml
-  getLastSentEmail: () => SentEmailLog<TVariables> | undefined
-  getSentEmails: () => Array<SentEmailLog<TVariables>>
+  getLastSentEmail: () => SentEmailLog<TVariables, TVariablesSensetive> | undefined
+  getSentEmails: () => Array<SentEmailLog<TVariables, TVariablesSensetive>>
 }
-type CreateEmailDefinition = <TVariables extends Variables = Variables>(props: {
+type CreateEmailDefinition = <
+  TVariables extends Variables = Variables,
+  TVariablesSensetive extends Variables = Variables,
+>(props: {
   name: string
-  subject: string | ((props: TVariables) => string)
-  template: EmailTemplateGetter<TVariables>
-  previewVariables: TVariables
-}) => EmailDefinition<TVariables>
+  subject: string | ((props: TVariables & TVariablesSensetive) => string)
+  template: EmailTemplateGetter<TVariables, TVariablesSensetive>
+  previewVariables: TVariables & TVariablesSensetive
+}) => EmailDefinition<TVariables, TVariablesSensetive>
 
 export const createEmailsThings = ({
   sendEmailThroughProvider,
@@ -104,17 +119,27 @@ export const createEmailsThings = ({
       return getHtml({ variables: previewVariables })
     }
 
-    const send: SendEmail = async ({ to, variables, subject: senderSubject }) => {
+    const send: SendEmail = async ({ to, variables, subject: senderSubject, variablesSensetive }) => {
+      const allVariables = {
+        ...variables,
+        ...variablesSensetive,
+      }
+      const loggableVariables = {
+        ...variables,
+        ...(mock
+          ? variablesSensetive
+          : Object.fromEntries(Object.entries(variablesSensetive || {}).map(([key]) => [key, '🙈']))),
+      }
       try {
         const subject =
           senderSubject || (typeof templateSubject === 'function' ? templateSubject(variables as any) : templateSubject)
         to = typeof to === 'string' ? to : to.email
-        const html = getHtml({ variables })
+        const html = getHtml({ variables: allVariables })
         const result = await (async () => {
           if (!mock) {
             return await sendEmailThroughProvider({ to, subject, html })
           } else {
-            sentEmails.push({ name, to, subject, variables })
+            sentEmails.push({ name, to, subject, variables: allVariables })
             return { loggableResponse: { status: 200, statusText: 'OK', data: 'Mocked email sent' } }
           }
         })()
@@ -125,7 +150,7 @@ export const createEmailsThings = ({
             name,
             to,
             subject,
-            variables,
+            variables: loggableVariables,
             response: result.loggableResponse,
           },
         })
@@ -137,7 +162,7 @@ export const createEmailsThings = ({
           meta: {
             name,
             to,
-            variables,
+            variables: loggableVariables,
           },
         })
         return { ok: false }
