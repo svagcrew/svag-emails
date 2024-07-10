@@ -10,7 +10,7 @@ export type SendEmailThroughProvider = (props: { to: string; subject: string; ht
   originalResponse?: any
   loggableResponse: { status: number; statusText: string; data: any }
 }>
-type Variables = Record<string, any>
+type Variables = {}
 type ReactEmailTemplateGetter<
   TVariables extends Variables = Variables,
   TVariablesSensetive extends Variables = Variables,
@@ -28,12 +28,13 @@ type SendEmailProps<TVariables extends Variables = Variables, TVariablesSensetiv
   variables?: TVariables
   variablesSensetive?: TVariablesSensetive
 }
-type SentEmailLog<
-  TVariables extends Variables = Variables,
-  TVariablesSensetive extends Variables = Variables,
-> = SendEmailProps<TVariables, TVariablesSensetive> & {
+type SentEmailLog<TVariables extends Variables = Variables, TVariablesSensetive extends Variables = Variables> = Omit<
+  SendEmailProps<TVariables, TVariablesSensetive>,
+  'variables' | 'variablesSensetive'
+> & {
   to: string
   name: string
+  variables: TVariables & TVariablesSensetive
 }
 type SendEmail<TVariables extends Variables = Variables, TVariablesSensetive extends Variables = Variables> = (
   props: SendEmailProps<TVariables, TVariablesSensetive>
